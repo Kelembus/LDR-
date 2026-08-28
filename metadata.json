@@ -1,0 +1,7 @@
+{
+  "name": "Adaptive Traffic Control Simulation",
+  "description": "Interactive sensor-driven traffic control simulation featuring multi-class vehicles, dedicated bus lanes, intelligent anti-gridlock intersection management, and live telemetry.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
