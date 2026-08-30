@@ -384,17 +384,59 @@ export class Renderer {
   }
 
   private paintCrosswalks(g: CanvasRenderingContext2D, { x, y }: { x: number; y: number }): void {
-    g.fillStyle = PALETTE.zebra;
-    const stripe = 7;
-    const step = 13;
-    const band = CROSSWALK_OUTER - CROSSWALK_INNER;
+    const stripe = 7.5;
+    const step = 13.5;
+    const band = CROSSWALK_OUTER - CROSSWALK_INNER; // 16px band width
+    const halfRoad = WORLD.halfRoad;
+    const roadW = WORLD.roadWidth;
 
-    for (let offset = -WORLD.halfRoad + 4; offset < WORLD.halfRoad - 4; offset += step) {
+    // 1. High-contrast dark asphalt underlay backing for crisp street visibility
+    g.fillStyle = PALETTE.zebraBack;
+    g.fillRect(x - halfRoad, y - CROSSWALK_OUTER - 1, roadW, band + 2); // North
+    g.fillRect(x - halfRoad, y + CROSSWALK_INNER - 1, roadW, band + 2); // South
+    g.fillRect(x - CROSSWALK_OUTER - 1, y - halfRoad, band + 2, roadW); // West
+    g.fillRect(x + CROSSWALK_INNER - 1, y - halfRoad, band + 2, roadW); // East
+
+    // 2. Bright high-visibility zebra crossing bars
+    g.fillStyle = PALETTE.zebra;
+    for (let offset = -halfRoad + 3; offset < halfRoad - 5; offset += step) {
       g.fillRect(x + offset, y - CROSSWALK_OUTER, stripe, band); // North
       g.fillRect(x + offset, y + CROSSWALK_INNER, stripe, band); // South
       g.fillRect(x - CROSSWALK_OUTER, y + offset, band, stripe); // West
       g.fillRect(x + CROSSWALK_INNER, y + offset, band, stripe); // East
     }
+
+    // 3. Crisp white crosswalk boundary corridor lines
+    g.strokeStyle = PALETTE.crosswalkBorder;
+    g.lineWidth = 1.4;
+    // North crosswalk boundaries
+    this.line(g, x - halfRoad, y - CROSSWALK_OUTER, x + halfRoad, y - CROSSWALK_OUTER);
+    this.line(g, x - halfRoad, y - CROSSWALK_INNER, x + halfRoad, y - CROSSWALK_INNER);
+    // South crosswalk boundaries
+    this.line(g, x - halfRoad, y + CROSSWALK_OUTER, x + halfRoad, y + CROSSWALK_OUTER);
+    this.line(g, x - halfRoad, y + CROSSWALK_INNER, x + halfRoad, y + CROSSWALK_INNER);
+    // West crosswalk boundaries
+    this.line(g, x - CROSSWALK_OUTER, y - halfRoad, x - CROSSWALK_OUTER, y + halfRoad);
+    this.line(g, x - CROSSWALK_INNER, y - halfRoad, x - CROSSWALK_INNER, y + halfRoad);
+    // East crosswalk boundaries
+    this.line(g, x + CROSSWALK_OUTER, y - halfRoad, x + CROSSWALK_OUTER, y + halfRoad);
+    this.line(g, x + CROSSWALK_INNER, y - halfRoad, x + CROSSWALK_INNER, y + halfRoad);
+
+    // 4. Yellow textured tactile warning pads at sidewalk curbs
+    g.fillStyle = PALETTE.tactilePaving;
+    const padDepth = 6;
+    // North curbs
+    g.fillRect(x - halfRoad - padDepth, y - CROSSWALK_OUTER, padDepth, band);
+    g.fillRect(x + halfRoad, y - CROSSWALK_OUTER, padDepth, band);
+    // South curbs
+    g.fillRect(x - halfRoad - padDepth, y + CROSSWALK_INNER, padDepth, band);
+    g.fillRect(x + halfRoad, y + CROSSWALK_INNER, padDepth, band);
+    // West curbs
+    g.fillRect(x - CROSSWALK_OUTER, y - halfRoad - padDepth, band, padDepth);
+    g.fillRect(x - CROSSWALK_OUTER, y + halfRoad, band, padDepth);
+    // East curbs
+    g.fillRect(x + CROSSWALK_INNER, y - halfRoad - padDepth, band, padDepth);
+    g.fillRect(x + CROSSWALK_INNER, y + halfRoad, band, padDepth);
   }
 
   private paintStopBars(g: CanvasRenderingContext2D, intersection: Intersection): void {
@@ -722,11 +764,147 @@ export class Renderer {
     if (this.showSensors) {
       this.drawDetectors(ctx);
     }
+    this.drawCrosswalkSignals(ctx);
     this.drawSignals(ctx);
+    this.drawPedestrians(ctx, alpha);
     this.drawVehicles(ctx, alpha);
     this.drawFaults(ctx);
     this.drawHover(ctx);
     this.drawVignette(ctx);
+  }
+
+  private drawCrosswalkSignals(ctx: CanvasRenderingContext2D): void {
+    for (const intersection of this.sim.intersections) {
+      if (!intersection.crosswalks) continue;
+      const isActive = intersection.isPedestrianPhase;
+      const countdown = intersection.pedestrianCountdown;
+
+      for (const crosswalk of intersection.crosswalks) {
+        const { isVerticalRoad, x, y, startX, startY, endX, endY } = crosswalk;
+
+        // 1. If active, draw illuminated green crossing corridor highlight
+        if (isActive) {
+          ctx.save();
+          ctx.fillStyle = 'rgba(52, 211, 153, 0.14)';
+          if (isVerticalRoad) {
+            ctx.fillRect(x - WORLD.halfRoad, y - 8, WORLD.roadWidth, 16);
+          } else {
+            ctx.fillRect(x - 8, y - WORLD.halfRoad, 16, WORLD.roadWidth);
+          }
+          ctx.restore();
+        }
+
+        // 2. Draw pedestrian signal heads and countdown indicators at both sidewalk ends
+        const posts = [
+          { px: startX, py: startY },
+          { px: endX, py: endY },
+        ];
+
+        for (let idx = 0; idx < posts.length; idx++) {
+          const { px, py } = posts[idx];
+
+          // Pedestrian signal housing
+          const boxW = 10;
+          const boxH = 16;
+          ctx.fillStyle = '#0f172a';
+          this.roundRect(ctx, px - boxW / 2, py - boxH / 2, boxW, boxH, 3);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+
+          // Top lamp: Red Don't Walk (✋)
+          ctx.beginPath();
+          ctx.arc(px, py - 3.8, 3.2, 0, Math.PI * 2);
+          ctx.fillStyle = !isActive ? PALETTE.red : 'rgba(248, 113, 113, 0.15)';
+          ctx.fill();
+
+          // Bottom lamp: Green Walk (🚶)
+          ctx.beginPath();
+          ctx.arc(px, py + 3.8, 3.2, 0, Math.PI * 2);
+          ctx.fillStyle = isActive ? PALETTE.green : 'rgba(52, 211, 153, 0.15)';
+          ctx.fill();
+
+          // Active 4-second fixed timer countdown badge (4 -> 3 -> 2 -> 1 -> 0)
+          if (isActive && idx === 0) {
+            const badgeOffset = isVerticalRoad ? (y < intersection.y ? -16 : 16) : (x < intersection.x ? -16 : 16);
+            const bx = isVerticalRoad ? px : px + badgeOffset;
+            const by = isVerticalRoad ? py + badgeOffset : py;
+
+            ctx.save();
+            ctx.font = '700 10px ' + MONO_STACK;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+            this.roundRect(ctx, bx - 11, by - 7, 22, 14, 4);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(52, 211, 153, 0.7)';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+
+            ctx.fillStyle = PALETTE.green;
+            ctx.fillText(`${countdown}`, bx, by + 0.5);
+            ctx.restore();
+          }
+        }
+      }
+    }
+  }
+
+  private drawPedestrians(ctx: CanvasRenderingContext2D, alpha: number): void {
+    for (const p of this.sim.pedestrians) {
+      p.syncRender(alpha);
+
+      ctx.save();
+      ctx.translate(p.renderX, p.renderY);
+
+      // Drop shadow under pedestrian
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.beginPath();
+      ctx.ellipse(0, 1.2, 3.8, 2.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Rotate to walking direction
+      ctx.rotate(p.angle + Math.PI / 2);
+
+      // Stride leg swing
+      const swing = Math.sin(p.stridePhase) * 2.4;
+
+      // Legs / Pants
+      ctx.fillStyle = '#1e293b';
+      // Left leg
+      this.roundRect(ctx, -2.2, swing - 1.2, 1.8, 3.2, 0.8);
+      ctx.fill();
+      // Right leg
+      this.roundRect(ctx, 0.4, -swing - 1.2, 1.8, 3.2, 0.8);
+      ctx.fill();
+
+      // Torso / Shirt with vibrant clothing color
+      ctx.fillStyle = p.color;
+      this.roundRect(ctx, -2.8, -2.2, 5.6, 4.4, 1.6);
+      ctx.fill();
+
+      // Arms swinging opposite to legs
+      ctx.fillStyle = p.skinColor;
+      ctx.beginPath();
+      ctx.arc(-3.2, -swing * 0.6, 1.0, 0, Math.PI * 2);
+      ctx.arc(3.2, swing * 0.6, 1.0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Head
+      ctx.fillStyle = p.skinColor;
+      ctx.beginPath();
+      ctx.arc(0, -0.6, 2.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Hair
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(0, -1.1, 1.7, Math.PI, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
   }
 
   private drawDetectors(ctx: CanvasRenderingContext2D): void {

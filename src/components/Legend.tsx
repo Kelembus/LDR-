@@ -30,6 +30,30 @@ export const Legend: React.FC = () => {
         </div>
       </div>
 
+      {/* Pedestrian Crossings */}
+      <div className="pt-3 border-t border-white/10">
+        <div className="text-[9.5px] font-bold uppercase tracking-widest text-[#64748b] mb-2">
+          Pedestrian Crossings
+        </div>
+        <div className="space-y-1.5 text-xs text-[#94a3b8]">
+          <div className="flex items-center gap-2.5">
+            <span className="w-4 h-3 rounded-sm bg-[#0f172a] border border-white/40 flex items-center justify-center gap-0.5 flex-none">
+              <span className="w-0.5 h-2 bg-white/90 rounded-xs" />
+              <span className="w-0.5 h-2 bg-white/90 rounded-xs" />
+              <span className="w-0.5 h-2 bg-white/90 rounded-xs" />
+            </span>
+            <span>High-Contrast Zebra Striping &middot; Intersection crosswalks</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <span className="w-3.5 h-3.5 rounded-sm bg-emerald-500/20 border border-emerald-400/60 text-emerald-300 font-mono text-[9px] font-bold grid place-items-center flex-none">
+              4s
+            </span>
+            <span>Fixed Crossing Timer &middot; 4.0s active cycle</span>
+            <span className="ml-auto font-mono text-[10px] text-emerald-400">Fixed 4s</span>
+          </div>
+        </div>
+      </div>
+
       {/* Detector Loops */}
       <div className="pt-3 border-t border-white/10">
         <div className="text-[9.5px] font-bold uppercase tracking-widest text-[#64748b] mb-2">
