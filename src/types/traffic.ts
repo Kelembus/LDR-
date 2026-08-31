@@ -45,18 +45,6 @@ export interface IncidentRecord {
   text: string;
 }
 
-export type PedestrianState = 'waiting' | 'crossing' | 'exited';
-
-export interface CrosswalkViewData {
-  id: string;
-  intersectionId: number;
-  direction: DirectionKey;
-  isActive: boolean;
-  remainingSeconds: number;
-  totalDurationSeconds: number;
-  pedestrianCount: number;
-}
-
 export interface IntersectionViewData {
   id: number;
   row: number;
@@ -65,7 +53,6 @@ export interface IntersectionViewData {
   y: number;
   aspects: SignalState[];
   countdowns: number[];
-  crosswalks?: CrosswalkViewData[];
   queueBlocked: boolean[];
   boxBlocked: boolean[];
   crashed: boolean[];

@@ -19,12 +19,12 @@ export const SIGNAL = {
   minGreen: 300,        // ticks (5s)
   maxGreen: 720,        // ticks (12s)
   defaultGreen: 360,    // ticks (6s)
-  yellow: 90,           // ticks (1.5s)
+  yellow: 60,           // ticks (1s)
   greenStep: 60,        // adaptive retiming increment
   dwellThreshold: 120,  // 2s of continuous presence = "blocked"
   crashCycles: 4,       // blocked box surviving N green services = crash
   maxHoldOnCall: 300,   // truncate a green to at most 5s once a call is queued
-  glideNudge: 0,
+  glideNudge: 10,
 } as const;
 
 export const STOP_BAR_OFFSET = WORLD.halfRoad + 19; // 75px from intersection center
@@ -129,7 +129,7 @@ export const DIRECTIONS: Record<DirectionKey, DirectionConfig> = {
 
 export const DIR_KEYS: DirectionKey[] = ['S', 'N', 'E', 'W'];
 
-export const PHASE_OF = [0, 0, 3, 3] as const;
+export const PHASE_OF = [0, 2, 4, 6] as const;
 
 export const CROSS_CHOICES: Record<DirectionKey, DirectionKey[]> = {
   N: ['E', 'W'],
@@ -153,24 +153,6 @@ export function mulberry32(seed: number) {
   };
 }
 
-export const PEDESTRIAN = {
-  crossingDurationSeconds: 4,      // Exactly 4 seconds as required
-  crossingTicks: 4 * TICK_HZ,      // 240 ticks (4.0s fixed timer)
-  inactivityTicks: 6 * TICK_HZ,    // 360 ticks (6.0s between walk phases)
-  walkSpeed: 0.62,                 // px per tick (~37 px/s, completes 112px crosswalk in ~3.0s)
-  radius: 3.2,                     // pedestrian collision/visual radius
-  colors: [
-    '#38bdf8', // Sky blue
-    '#f43f5e', // Rose
-    '#34d399', // Emerald
-    '#fbbf24', // Amber
-    '#a78bfa', // Purple
-    '#f8fafc', // Clean white
-    '#fb923c', // Orange
-    '#ec4899', // Pink
-  ],
-} as const;
-
 export const PALETTE = {
   ground: '#080b10',
   block: '#10141b',
@@ -185,10 +167,7 @@ export const PALETTE = {
   pad: '#1a1f28',
   edgeLine: 'rgba(232,240,255,.32)',
   centre: 'rgba(251,191,36,.55)',
-  zebra: 'rgba(241,245,249,.82)',             // Crisp high-visibility zebra stripes
-  zebraBack: 'rgba(15,23,42,.75)',            // Dark tactile backing pad
-  crosswalkBorder: 'rgba(255,255,255,.35)',   // Crosswalk corridor border line
-  tactilePaving: 'rgba(245, 158, 11, 0.85)',  // Yellow tactile sidewalk ramp pad
+  zebra: 'rgba(232,240,255,.24)',
   stopBar: 'rgba(232,240,255,.55)',
   arrow: 'rgba(232,240,255,.20)',
   label: 'rgba(255,255,255,.12)',

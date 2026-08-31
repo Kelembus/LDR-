@@ -38,19 +38,6 @@ export const IntersectionMonitor: React.FC<IntersectionMonitorProps> = ({ inters
               {inter.id}
             </div>
 
-            {/* Active Pedestrian Crosswalk Indicator (4-second fixed countdown) */}
-            {inter.crosswalks?.some((c) => c.isActive) && (
-              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/35 text-[9px] font-mono text-emerald-300">
-                <span className="text-[10px]">🚶</span>
-                <span>
-                  {Math.max(
-                    ...inter.crosswalks.filter((c) => c.isActive).map((c) => c.remainingSeconds)
-                  )}
-                  s
-                </span>
-              </div>
-            )}
-
             <div className="flex gap-1.5 ml-auto">
               {[0, 1, 2, 3].map((i) => {
                 const aspect = inter.aspects[i] as SignalState;

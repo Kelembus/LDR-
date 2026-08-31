@@ -12,7 +12,6 @@ import {
   WORLD,
 } from './config';
 import { Intersection } from './Intersection';
-import { Pedestrian } from './Pedestrian';
 import { SpatialGrid } from './SpatialGrid';
 import { Vehicle } from './Vehicle';
 
@@ -25,7 +24,6 @@ export class Simulation {
   public intersections: Intersection[];
   public grid: SpatialGrid;
   public vehicles: Vehicle[];
-  public pedestrians: Pedestrian[];
   public crashes: IncidentRecord[];
   public onCrash: ((record: IncidentRecord) => void) | null = null;
   public spawnRate = 0.03;
@@ -43,14 +41,12 @@ export class Simulation {
     }
     this.grid = new SpatialGrid(100);
     this.vehicles = [];
-    this.pedestrians = [];
     this.crashes = [];
     this.reset();
   }
 
   reset(): void {
     this.vehicles.length = 0;
-    this.pedestrians.length = 0;
     this.crashes.length = 0;
     this.masterTimer = 0;
     this.crashFlash = 0;
@@ -59,7 +55,6 @@ export class Simulation {
       intersection.reset();
     }
     Vehicle.resetSerial();
-    Pedestrian.resetSerial();
   }
 
   reportCrash(intersection: Intersection, index: number): void {
@@ -88,32 +83,14 @@ export class Simulation {
 
     // Advance intersection signal controllers
     for (const intersection of this.intersections) {
-      const startedPedestrianPhase = intersection.advance(
+      intersection.advance(
         this.masterTimer,
-        (inter, idx) => this.reportCrash(inter, idx)
-      );
-
-      if (startedPedestrianPhase) {
-        for (const crosswalk of intersection.crosswalks) {
-          const spawned = crosswalk.spawnPedestrians();
-          this.pedestrians.push(...spawned);
+        (inter, idx) => this.reportCrash(inter, idx),
+        () => {
+          this.stats.preempts++;
         }
-      }
+      );
     }
-
-    // Update pedestrians
-    for (let i = 0; i < this.pedestrians.length; i++) {
-      this.pedestrians[i].tick();
-    }
-    // Remove finished pedestrians
-    let pedWrite = 0;
-    for (let i = 0; i < this.pedestrians.length; i++) {
-      const p = this.pedestrians[i];
-      if (!p.isFinished) {
-        this.pedestrians[pedWrite++] = p;
-      }
-    }
-    this.pedestrians.length = pedWrite;
 
     this.scanDetectors();
     this.driveVehicles();
